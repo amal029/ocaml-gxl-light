@@ -1,0 +1,9 @@
+This is the GXL parsing and in-place desctructive update library.
+
+GXL is an XML based format for representing different types of graphs:
+e.g. abstract syntax trees, hyper-graphs, etc.
+
+Just run make clean && make to create the gxl-light.cma compiled library.
+
+
+Requirements: xml-light.cma from the caml-hump website.
