@@ -4,7 +4,7 @@
 *)
 
 module GxlDocument : sig 
-  exception NotFound;;
+  exception Not_found;;
   exception GXLParseError of string ;;
   type t
   val make : unit -> t
@@ -14,7 +14,7 @@ module GxlDocument : sig
   val dtd_validate : dtd:string -> t -> Xml.xml
 end =
 struct
-  exception NotFound;;
+  exception Not_found;;
   exception GXLParseError of string;;
   open GXL;;
   (* All the types of GXL *)
@@ -71,7 +71,7 @@ struct
       | Dtd.Check_error x as h-> raise h
       | Xml.File_not_found x as h -> raise h
       | Dtd.Prove_error x as h -> raise h
-      | _ -> raise NotFound
+      | _ as h -> raise h
   ;;
   
   let direction_of_string = function
@@ -123,8 +123,6 @@ struct
     let v =
       if (List.length !value) <> 1 then raise (GXLParseError ("GXLAtrr " ^ name ^ " does not have exactly one GXLValue"))
       else (List.hd (!value)) in
-    (*debug*)
-    (* print_endline ((string_of_gxl_value v) ^ name); *)
     PGXLAttr (gxl_attr_make ~attr_value:v ~attr_id:id ~attr_kind:kind ~attr_children:!attrs ~attr_name:name);
   and build_gxl_gxl (_,y,z) =
     (* First get the graphs list *)
@@ -147,14 +145,6 @@ struct
     let children = List.map parse_xml z in
     let gtype = ref None in List.iter (fun x -> match x with PGXLType x -> (match x with GXLType _ -> gtype := Some x )
       | _ -> ()) children; 
-    let element_list = ref [] in
-    List.iter (fun x -> match x with PGXLLocalConnection x -> (match x with GXLRel _ | GXLEdge _ -> element_list :=
-      gxl_local_connection_make (x) :: !element_list)
-      | _ -> () ) children;
-    List.iter (fun x -> match x with PGXLGraphElement x -> (match x with GXLNode _ ->  element_list := x :: !element_list
-      | _ -> ()) | _ -> ()) children;
-    let attr_list = ref [] in List.iter (fun x -> match x with PGXLAttr x -> (match x with GXLAttr _ -> attr_list :=  x::!attr_list)
-      | _ -> ()) children;
     (* Now taking out the atributes of the graph node *)
     let id = ref "" in
     let role = ref None in
@@ -172,6 +162,25 @@ struct
   	    "defaultdirected" -> DefaultDirected | "defaultundirected" -> DefaultUndirected 
 	    | _ -> raise (GXLParseError "GXLGraph error: attribute edgemode not defined"))
 	| _ -> () ) y;
+    if !id = "" then raise (GXLParseError "GXLGraph id undefined");
+    let element_list = ref [] in
+    List.iter (fun x -> match x with PGXLLocalConnection x -> 
+      let isd = 
+      (
+	match x with 
+	  | GXLRel (_,t) -> t.rel_isdirected
+	  | GXLEdge (_,t) -> t.edge_isdirected
+      ) in
+      (match isd with
+	| None -> ()
+	| Some t -> if (((!edgemode = Directed) && (not t)) || ((!edgemode = Undirected) && t))
+	  then raise (GXLParseError "Directions do not match GXLGraph/GXLLocalConnection"));
+	element_list := gxl_local_connection_make (x) :: !element_list
+      | _ -> ()) children;
+    List.iter (fun x -> match x with PGXLGraphElement x -> (match x with GXLNode _ ->  element_list := x :: !element_list
+      | _ -> ()) | _ -> ()) children;
+    let attr_list = ref [] in List.iter (fun x -> match x with PGXLAttr x -> (match x with GXLAttr _ -> attr_list :=  x::!attr_list)
+      | _ -> ()) children;
     PGXLTypedElement (gxl_graph_make ~role:!role ~edgeids:!edgeids ~hypergraph:!hypergraph ~edgemode:!edgemode
   			~gxl_type:!gtype ~attrs:!attr_list ~elements:!element_list ~id:!id)
   and build_gxl_atomic_values (x,_,z) =
@@ -186,10 +195,10 @@ struct
     ) in
     PGXLValue v
   and build_gxl_type (_,y,_) =
-    let (_,link) = try List.find (fun (x,y) -> x = "xlink:href") y with NotFound -> 
+    let (_,link) = try List.find (fun (x,y) -> x = "xlink:href") y with Not_found -> 
       raise (GXLParseError "GXLType xlink:href not found") in PGXLType (gxl_type_make link)
   and build_gxl_locator (_,y,_) =
-    let (_,link) = try List.find (fun (x,y) -> x="xlink:href") y with NotFound -> 
+    let (_,link) = try List.find (fun (x,y) -> x="xlink:href") y with Not_found -> 
       raise (GXLParseError "GXLLocator xlink:href missing") in PGXLValue (gxl_locator_value_make (gxl_locator_make link))
   and build_gxl_composite_values (x,_,z) =
     let children = List.map parse_xml z in
@@ -228,10 +237,14 @@ struct
       (match x with GXLGraph _ -> rgraphs := x :: !rgraphs 
 	| _ -> raise (GXLParseError ("GXLRel " ^ id ^ "cannot contain graph_element_type children other than GXLGraph")))
       | _ -> ()) children;
-    let rrelends = ref [] in List.iter (fun x -> match x with PGXLAttributedElement x -> 
-      (match x with GXLRelend _ -> rrelends := x :: !rrelends
-	| _ -> raise (GXLParseError ("GXLRel " ^ id ^ "cannot contain graph_attributed_type children other than GXLRelend")))
+    let isd = (match isdirected with Some x -> x | None -> true) in
+    List.iter (fun x -> match x with PGXLAttributedElement x -> 
+      (match x with GXLRelend _ -> 
+	if ((gxl_relend_get_direction x) = GXL_NONE) && (isd) then 
+	  raise (GXLParseError ("Directions of GXLRelend/GXLRel do not match " ^ id))
+	| _ -> raise (GXLParseError "GXLRel cannot contain any children but GXLRelend types"))
       | _ -> ()) children;
+    let rrelends = ref [] in List.iter (fun x -> match x with PGXLAttributedElement x -> rrelends := x :: !rrelends | _ -> ()) children;
     PGXLLocalConnection (gxl_rel_make ~gxl_type:!rtype ~attrs:!rattrs ~graphs:!rgraphs ~isdirected:isdirected ~relends:!rrelends ~id:id);
   and build_gxl_relend (_,y,z) ele =
     (* First get the children *)
@@ -241,7 +254,7 @@ struct
     let startorder = try Some (int_of_string (Xml.attrib ele "startorder")) with | Xml.Not_element _ | Xml.No_attribute _ -> None in
     let endorder = try Some (int_of_string (Xml.attrib ele "endorder")) with | Xml.Not_element _ | Xml.No_attribute _ -> None in
     let direction = try (direction_of_string (Xml.attrib ele "direction")) with | Xml.Not_element _ | Xml.No_attribute _ -> GXL_NONE in
-    let target = try (Xml.attrib ele "role") with | Xml.Not_element _ | Xml.No_attribute _ -> 
+    let target = try (Xml.attrib ele "target") with | Xml.Not_element _ | Xml.No_attribute _ -> 
       raise (GXLParseError ("GXLRelend has no target specified !!")) in
     PGXLAttributedElement (gxl_relend_make ~role:role ~startorder:startorder ~endorder:endorder ~direction:direction ~attrs:!rattrs
 			     ~local_connection:None ~target:target);

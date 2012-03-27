@@ -11,6 +11,7 @@ exception GXLRelendException;;
 exception GXLElementTypeExn of string;;
 exception GXLLengthExn of string;;
 exception NotFound;; 
+exception GXLGraphException of string;;
 
 (**
    {1 GXLValue, GXLType, and GXLLocator types}
@@ -626,6 +627,18 @@ let set_graph_element_list v = function
 ;;
 
 let add_to_graph_element_list v graph = 
+  (* First check directions for GXLEdge and GXLRel *)
+  (try
+     let isdo =
+       (match v with
+	 | GXLLocalConnection x -> (match x with GXLEdge (_,t) -> t.edge_isdirected | GXLRel (_,t) -> t.rel_isdirected)
+	 | _ -> raise Exit) in
+     let isd = match isdo with Some x -> x | None -> false in
+     let gem = (match graph with GXLGraph (_,t) -> t.graph_edge_mode | _ -> raise (GXLElementTypeExn "Not of type GXLGraph")) in
+     if (gem = Directed) && (not isd) then raise (GXLGraphException "Cannot be added since directions don't match")
+     else if (gem = Undirected) && (isd) then raise (GXLGraphException "Cannot be added since directions don't match");
+   with
+     | Exit -> ());
   let cl = get_graph_element_list graph in
   set_graph_element_list (cl @ [v]) graph
 ;;
@@ -1126,6 +1139,7 @@ and gxl_rel_to_xml p =
       );
       lambda (List.map gxl_attr_to_xml x.rel_shared.a) children_list;
       lambda (List.map gxl_typed_element_to_xml x.rel_shared.g) children_list;
+      lambda (List.map gxl_attributed_element_to_xml x.rel_end) children_list;
       Element ("rel",!attr_list,!children_list)
 (* This can go on recursing for ever, yah!!*)
 and get_source_id = function
@@ -1192,7 +1206,7 @@ let gxl_attr_make ~attr_value ?(attr_id=None) ?(attr_kind=None) ?(attr_children=
 *)
 let gxl_relend_make ?(role=None) ?(startorder=None) ?(endorder=None) ?(direction=GXL_NONE)
    ?(attrs=[]) ?(local_connection = None) ~target =
-  let t = try Hashtbl.find node_table target with | NotFound -> failwith ("Node " ^ target ^ " not found") in
+  let t = try Hashtbl.find node_table target with | Not_found -> failwith ("Node " ^ target ^ " not found") in
   let relend = 
     GXLRelend({relend_attrs= attrs;
 	       relend_target = (ref t);
@@ -1256,8 +1270,8 @@ let gxl_node_make ?(gxl_type=None) ?(attrs=[]) ?(graphs=[]) ~id =
 let gxl_edge_make ?(gxl_type=None) ?(attrs=[]) ?(graphs=[]) ?(id=None) ?(fromorder=None)
     ?(toorder=None) ?(isdirected= None) ~from_node ~to_node = 
   (* First find the nodes that have been already made *)
-  let fnode = try Hashtbl.find node_table from_node with | NotFound -> failwith ("Node " ^ from_node ^ " not found") in
-  let tnode = try Hashtbl.find node_table to_node with | NotFound -> failwith ("Node " ^ to_node ^ " not found") in
+  let fnode = try Hashtbl.find node_table from_node with | Not_found -> failwith ("Node " ^ from_node ^ " not found") in
+  let tnode = try Hashtbl.find node_table to_node with | Not_found -> failwith ("Node " ^ to_node ^ " not found") in
   let edge = GXLEdge({edge_shared={t = gxl_type; a = attrs; g=graphs};
 	   edge_tentacles = [||]},
 	  {edge_id=id;edge_fromorder=(ref None);
