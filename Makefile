@@ -23,6 +23,5 @@ doc: gxl-light.cmxa
 
 clean:
 	rm -f *.cm* *.o *.a
-	rm -rf $(DDIR)
 
 test:
