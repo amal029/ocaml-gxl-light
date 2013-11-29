@@ -1,0 +1,5 @@
+version = "1.0"
+name = "ocaml-gxl-light"
+description = "Ocaml gxl parser and in-place destructive library"
+depends="xml-light"
+archive(native) = "gxl-light.cmxa"
