@@ -1,27 +1,25 @@
-CC=ocamlc
+CC=ocamlopt
 CCDOC=ocamldoc
 SRC=GXL.ml gxlDocument.ml
-OBJ=GXL.cmo gxlDocument.cmo
-F=-I ../xml-light
-DDIR=/tmp/GXL
+OBJ=GXL.cmx gxlDocument.cmx
+F=-I `ocamlfind query xml-light`
+DDIR=doc
 DF=-html -d $(DDIR)
 
-all: gxl-light.cma doc
+build: gxl-light.cmxa
 
-gxl-light.cma: o
+gxl-light.cmxa: o
 	$(CC) $(F) -a $(OBJ) -o $@
 
 o: $(SRC)
 	$(CC) $(F) -c $(SRC)
 
-doc: gxl-light.cma
+doc: gxl-light.cmxa
 	mkdir -p $(DDIR)
-	cp ../style.css $(DDIR)
 	$(CCDOC) $(F) $(DF) $(SRC)
 
 clean:
-	rm -f *.cm* 
+	rm -f *.cm* *.o *.a
 	rm -rf $(DDIR)
 
 test:
-
