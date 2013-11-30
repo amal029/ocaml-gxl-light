@@ -123,7 +123,6 @@ struct
     let v =
       if (List.length !value) <> 1 then raise (GXLParseError ("GXLAtrr " ^ name ^ " does not have exactly one GXLValue"))
       else (List.hd (!value)) in
-    let () = print_endline name in
     PGXLAttr (gxl_attr_make ~attr_value:v ~attr_id:id ~attr_kind:kind ~attr_children:!attrs ~attr_name:name);
   and build_gxl_gxl (_,y,z) =
     (* First get the graphs list *)
