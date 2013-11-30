@@ -7,3 +7,6 @@ Just run make clean && make to create the gxl-light.cma compiled library.
 
 
 Requirements: xml-light.cma from the caml-hump website.
+
+Doc: http://homepages.engineering.auckland.ac.nz/~amal029/doc/index.html
+Opam repo: http://homepages.engineering.auckland.ac.nz/~amal029/testing
