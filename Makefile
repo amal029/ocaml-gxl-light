@@ -1,4 +1,4 @@
-CC=ocamlopt
+CC=ocamlopt -annot
 CCDOC=ocamldoc
 SRC=GXL.ml gxlDocument.ml
 OBJ=GXL.cmx gxlDocument.cmx
@@ -22,7 +22,11 @@ doc: gxl-light.cmxa
 	$(CCDOC) $(F) $(DF) $(SRC)
 
 clean:
-	rm -f *.cm* *.o *.a
+	rm -f *.cm* *.o *.a test
 
 clean-doc:
 	rm -rf $(DDIR)
+
+
+test:
+	ocamlfind $(CC) -o $@ -linkpkg -package xml-light gxl-light.cmxa test.ml

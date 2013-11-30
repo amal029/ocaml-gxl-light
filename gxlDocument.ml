@@ -19,17 +19,17 @@ struct
   open GXL;;
   (* All the types of GXL *)
   type 'a internal_type =
-      PGXLElement of gxl_element
-    | PGXLType of gxl_type
-    | PGXLValue of gxl_value
-    | PGXLAttributedElement of gxl_attributed_element
-    | PGXLTypedElement of gxl_typed_element
-    | PGXLGraphElement of gxl_graph_element
-    | PGXLLocalConnection of gxl_local_connection
-    | PGXLAttr of gxl_attr
+    PGXLElement of gxl_element
+  | PGXLType of gxl_type
+  | PGXLValue of gxl_value
+  | PGXLAttributedElement of gxl_attributed_element
+  | PGXLTypedElement of gxl_typed_element
+  | PGXLGraphElement of gxl_graph_element
+  | PGXLLocalConnection of gxl_local_connection
+  | PGXLAttr of gxl_attr
   ;;
   type t = 
-      GxlParser of t_t
+    GxlParser of t_t
   and t_t = {f_validator:(gxl_element -> Buffer.t -> bool);
 	     mutable gxl_gxl:gxl_element;
 	     f_to_xml: (gxl_element -> Xml.xml)}
@@ -68,10 +68,10 @@ struct
       let ret = Dtd.prove dtd_checked "<gxl>" to_prove in
       ret
     with
-      | Dtd.Check_error x as h-> raise h
-      | Xml.File_not_found x as h -> raise h
-      | Dtd.Prove_error x as h -> raise h
-      | _ as h -> raise h
+    | Dtd.Check_error x as h-> raise h
+    | Xml.File_not_found x as h -> raise h
+    | Dtd.Prove_error x as h -> raise h
+    | _ as h -> raise h
   ;;
   
   let direction_of_string = function
@@ -88,30 +88,30 @@ struct
     try
       let xml = Xml.parse_file file in
       match parser with
-  	  GxlParser x ->
-  	    let ret = parse_xml xml in
-	    match ret with
-	      | PGXLElement t -> (match t with GXLGXL _ as h -> x.gxl_gxl <- h | _ -> raise (GXLParseError "Top node not of type GXLGXL"))
-	      | _ ->raise (GXLParseError "Top node not of type GXLGXL")
+  	GxlParser x ->
+  	  let ret = parse_xml xml in
+	  match ret with
+	  | PGXLElement t -> (match t with GXLGXL _ as h -> x.gxl_gxl <- h | _ -> raise (GXLParseError "Top node not of type GXLGXL"))
+	  | _ ->raise (GXLParseError "Top node not of type GXLGXL")
     with
-      | Xml.Error x as h -> print_endline (Xml.error x); raise h
+    | Xml.Error x as h -> print_endline (Xml.error x); raise h
   and parse_xml xml = 
     match xml with
-      | Xml.Element (name,attrs_list,children_list) -> 
-	(match name with
-	    "gxl" -> build_gxl_gxl (name,attrs_list,children_list) (*done*)
-	  | "graph" -> build_gxl_graph (name,attrs_list,children_list) (*done*)
-	  | "node" -> build_gxl_node (name,attrs_list,children_list) xml (*done*)
-	  | "edge" -> build_gxl_edge (name,attrs_list,children_list) xml (* done *)
-	  | "rel" -> build_gxl_rel (name,attrs_list,children_list) xml (*done*)
-	  | "relend" -> build_gxl_relend (name,attrs_list,children_list) xml (*done*)
-	  | "type" -> build_gxl_type (name,attrs_list,children_list)(*done*)
-	  | "locator" -> build_gxl_locator (name,attrs_list,children_list)(*done*)
-	  | "attr" -> build_gxl_attr (name,attrs_list,children_list) xml (* done *)
-	  | "bag" | "seq" | "set" | "tup" -> build_gxl_composite_values(name,attrs_list,children_list)(*done*)
-	  | "string" | "int" | "bool" | "enum" | "float" -> build_gxl_atomic_values(name,attrs_list,children_list)(*done*)
-	  | _ -> raise (GXLParseError "unkown GXL element, cannot parse"))
-      | Xml.PCData yu -> raise (GXLParseError ("unkown GXL element" ^ yu ^ " cannot parse"))
+    | Xml.Element (name,attrs_list,children_list) -> 
+      (match name with
+	"gxl" -> build_gxl_gxl (name,attrs_list,children_list) (*done*)
+      | "graph" -> build_gxl_graph (name,attrs_list,children_list) (*done*)
+      | "node" -> build_gxl_node (name,attrs_list,children_list) xml (*done*)
+      | "edge" -> build_gxl_edge (name,attrs_list,children_list) xml (* done *)
+      | "rel" -> build_gxl_rel (name,attrs_list,children_list) xml (*done*)
+      | "relend" -> build_gxl_relend (name,attrs_list,children_list) xml (*done*)
+      | "type" -> build_gxl_type (name,attrs_list,children_list)(*done*)
+      | "locator" -> build_gxl_locator (name,attrs_list,children_list)(*done*)
+      | "attr" -> build_gxl_attr (name,attrs_list,children_list) xml (* done *)
+      | "bag" | "seq" | "set" | "tup" -> build_gxl_composite_values(name,attrs_list,children_list)(*done*)
+      | "string" | "int" | "bool" | "enum" | "float" -> build_gxl_atomic_values(name,attrs_list,children_list)(*done*)
+      | _ -> raise (GXLParseError "unkown GXL element, cannot parse"))
+    | Xml.PCData yu -> raise (GXLParseError ("unkown GXL element" ^ yu ^ " cannot parse"))
   and build_gxl_attr (_,y,z) ele = 
     let name = try Xml.attrib ele "name" with | Xml.Not_element _ | Xml.No_attribute _ ->
       raise (GXLParseError ("GXLAttr has no name")) in
@@ -123,6 +123,7 @@ struct
     let v =
       if (List.length !value) <> 1 then raise (GXLParseError ("GXLAtrr " ^ name ^ " does not have exactly one GXLValue"))
       else (List.hd (!value)) in
+    let () = print_endline name in
     PGXLAttr (gxl_attr_make ~attr_value:v ~attr_id:id ~attr_kind:kind ~attr_children:!attrs ~attr_name:name);
   and build_gxl_gxl (_,y,z) =
     (* First get the graphs list *)
@@ -154,31 +155,31 @@ struct
     (* Use a map to iterate and obtain the values *)
     List.iter (fun (x,y) ->
       match x with
-  	| "id" -> id := y
-  	| "role" -> role := Some y
-  	| "edgeids" -> edgeids := Some (bool_of_string y)
-  	| "hypergraph" -> hypergraph := Some (bool_of_string y)
-  	| "edgemode" -> edgemode := (match y with | "directed" -> Directed | "undirected" -> Undirected |
-  	    "defaultdirected" -> DefaultDirected | "defaultundirected" -> DefaultUndirected 
-	    | _ -> raise (GXLParseError "GXLGraph error: attribute edgemode not defined"))
-	| _ -> () ) y;
+      | "id" -> id := y
+      | "role" -> role := Some y
+      | "edgeids" -> edgeids := Some (bool_of_string y)
+      | "hypergraph" -> hypergraph := Some (bool_of_string y)
+      | "edgemode" -> edgemode := (match y with | "directed" -> Directed | "undirected" -> Undirected |
+  	  "defaultdirected" -> DefaultDirected | "defaultundirected" -> DefaultUndirected 
+	| _ -> raise (GXLParseError "GXLGraph error: attribute edgemode not defined"))
+      | _ -> () ) y;
     if !id = "" then raise (GXLParseError "GXLGraph id undefined");
     let element_list = ref [] in
     List.iter (fun x -> match x with PGXLLocalConnection x -> 
       let isd = 
-      (
-	match x with 
+	(
+	  match x with 
 	  | GXLRel (_,t) -> t.rel_isdirected
 	  | GXLEdge (_,t) -> t.edge_isdirected
-      ) in
+	) in
       (match isd with
-	| None -> ()
-	| Some t -> if (((!edgemode = Directed) && (not t)) || ((!edgemode = Undirected) && t))
-	  then raise (GXLParseError "Directions do not match GXLGraph/GXLLocalConnection"));
-	element_list := gxl_local_connection_make (x) :: !element_list
-      | _ -> ()) children;
+      | None -> ()
+      | Some t -> if (((!edgemode = Directed) && (not t)) || ((!edgemode = Undirected) && t))
+	then raise (GXLParseError "Directions do not match GXLGraph/GXLLocalConnection"));
+      element_list := gxl_local_connection_make (x) :: !element_list
+    | _ -> ()) children;
     List.iter (fun x -> match x with PGXLGraphElement x -> (match x with GXLNode _ ->  element_list := x :: !element_list
-      | _ -> ()) | _ -> ()) children;
+    | _ -> ()) | _ -> ()) children;
     let attr_list = ref [] in List.iter (fun x -> match x with PGXLAttr x -> (match x with GXLAttr _ -> attr_list :=  x::!attr_list)
       | _ -> ()) children;
     PGXLTypedElement (gxl_graph_make ~role:!role ~edgeids:!edgeids ~hypergraph:!hypergraph ~edgemode:!edgemode
@@ -206,11 +207,11 @@ struct
       | _ -> raise (GXLParseError "GXLCompositeValue children not of type GXLValue")) in
     let v =
       (match x with
-  	| "bag" -> gxl_composite_value_make (gxl_bag_make (List.map lambda children))
-  	| "tup" -> gxl_composite_value_make (gxl_tup_make (List.map lambda children))
-  	| "set" -> gxl_composite_value_make (gxl_set_make (List.map lambda children))
-  	| "seq" -> gxl_composite_value_make (gxl_seq_make (List.map lambda children))
-	| _ -> raise (GXLParseError ("Unknown composite type " ^ x))
+      | "bag" -> gxl_composite_value_make (gxl_bag_make (List.map lambda children))
+      | "tup" -> gxl_composite_value_make (gxl_tup_make (List.map lambda children))
+      | "set" -> gxl_composite_value_make (gxl_set_make (List.map lambda children))
+      | "seq" -> gxl_composite_value_make (gxl_seq_make (List.map lambda children))
+      | _ -> raise (GXLParseError ("Unknown composite type " ^ x))
       ) in PGXLValue v
   and build_gxl_node (_,y,z) ele =
     (* First get the id *)
@@ -235,15 +236,15 @@ struct
     let rattrs = ref [] in List.iter (fun x -> match x with PGXLAttr x -> rattrs := x :: !rattrs | _ -> ()) children;
     let rgraphs = ref [] in List.iter (fun x -> match x with PGXLTypedElement x -> 
       (match x with GXLGraph _ -> rgraphs := x :: !rgraphs 
-	| _ -> raise (GXLParseError ("GXLRel " ^ id ^ "cannot contain graph_element_type children other than GXLGraph")))
+      | _ -> raise (GXLParseError ("GXLRel " ^ id ^ "cannot contain graph_element_type children other than GXLGraph")))
       | _ -> ()) children;
     let isd = (match isdirected with Some x -> x | None -> true) in
     List.iter (fun x -> match x with PGXLAttributedElement x -> 
       (match x with GXLRelend _ -> 
 	if ((gxl_relend_get_direction x) = GXL_NONE) && (isd) then 
 	  raise (GXLParseError ("Directions of GXLRelend/GXLRel do not match " ^ id))
-	| _ -> raise (GXLParseError "GXLRel cannot contain any children but GXLRelend types"))
-      | _ -> ()) children;
+      | _ -> raise (GXLParseError "GXLRel cannot contain any children but GXLRelend types"))
+    | _ -> ()) children;
     let rrelends = ref [] in List.iter (fun x -> match x with PGXLAttributedElement x -> rrelends := x :: !rrelends | _ -> ()) children;
     PGXLLocalConnection (gxl_rel_make ~gxl_type:!rtype ~attrs:!rattrs ~graphs:!rgraphs ~isdirected:isdirected ~relends:!rrelends ~id:id);
   and build_gxl_relend (_,y,z) ele =
@@ -272,7 +273,7 @@ struct
     let etype = ref None in List.iter (fun x -> match x with PGXLType x -> etype := Some x  | _ -> ()) children;
     let egraphs = ref [] in List.iter (fun x -> match x with PGXLTypedElement x -> 
       (match x with GXLGraph _ -> egraphs := x :: !egraphs 
-	| _ -> raise (GXLParseError ("GXLEdge cannot contain graph_element_type children other than GXLGraph")))
+      | _ -> raise (GXLParseError ("GXLEdge cannot contain graph_element_type children other than GXLGraph")))
       | _ -> ()) children;
     PGXLLocalConnection (gxl_edge_make ~gxl_type:!etype ~attrs:!eattrs ~graphs:!egraphs 
 			   ~id:id ~fromorder:fromorder ~toorder:toorder 
@@ -283,18 +284,18 @@ struct
   let write ~file gxl_parser =
     let gxl_gxl = get_document_element gxl_parser in
     match gxl_parser with
-  	GxlParser x ->
+      GxlParser x ->
   	  (*validate the gxl arguments are gxl_gxl errors Xml.xml *)
-  	  let errors = Buffer.create 100 in
-  	  let ret = x.f_validator gxl_gxl errors in
-  	  if (ret = true) then
-  	    let ret = Xml.to_string_fmt (x.f_to_xml gxl_gxl) in
+  	let errors = Buffer.create 100 in
+  	let ret = x.f_validator gxl_gxl errors in
+  	if (ret = true) then
+  	  let ret = Xml.to_string_fmt (x.f_to_xml gxl_gxl) in
   	    (*open a file descriptor to the named file*)
-  	    let ochan = open_out file in
-  	    output_string ochan ret;
-  	    flush ochan; (*flush everything down*)
-  	    close_out ochan
-  	  else
-  	    prerr_endline (Buffer.contents errors)
+  	  let ochan = open_out file in
+  	  output_string ochan ret;
+  	  flush ochan; (*flush everything down*)
+  	  close_out ochan
+  	else
+  	  prerr_endline (Buffer.contents errors)
   ;;
 end

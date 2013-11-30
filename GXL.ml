@@ -961,9 +961,9 @@ let rec gxl_attr_to_xml el =
       );
       let children_list = ref [] in
       eval_attr_to_xml children_list (get_attr_children el);
-      (* Noe evaluate the values as well *)
+      (* Now evaluate the values as well *)
       children_list := (gxl_value_to_xml (get_attr_value el)) :: !children_list;
-      Element(name,!attrref,!children_list)
+      Element("attr",!attrref,!children_list)
 and eval_attr_to_xml children_list children =
   match children with
     | h::t -> children_list := (gxl_attr_to_xml h)::!children_list; eval_attr_to_xml children_list t
