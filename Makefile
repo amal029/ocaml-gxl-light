@@ -11,7 +11,7 @@ DF=-html -d $(DDIR)
 build: gxl-light.cmxa gxl-light.cma
 
 install:
-	ocamlfind install ocaml-gxl-light gxl-light.cmxa gxl-light.cma META gxlDocument.cmi GXL.cmi gxl-light.a
+	ocamlfind install gxl-light gxl-light.cmxa gxl-light.cma META gxlDocument.cmi GXL.cmi gxl-light.a
 
 gxl-light.cmxa: opt
 	$(CCOPT) $(F) -a $(OBJ) -o $@
